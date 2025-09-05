@@ -1,0 +1,24 @@
+#!/bin/sh
+# Configuración para iniciar automáticamente el dashboard de impresora
+
+# Desactivar ahorro de energía y protector de pantalla
+xset -dpms
+xset s off
+xset s noblank
+
+# Ocultar el cursor del mouse
+unclutter -idle 0.5 -root &
+
+# Usar un gestor de ventanas mínimo sin decoraciones
+matchbox-window-manager -use_titlebar no &
+
+# Esperar a que el dashboard esté disponible
+for i in {1..30}; do
+    if curl -s http://localhost:3000 > /dev/null; then
+        break
+    fi
+    sleep 2
+done
+
+# Iniciar el dashboard de impresora
+chromium-browser --kiosk --disable-infobars --no-first-run --disable-translate http://localhost:3000

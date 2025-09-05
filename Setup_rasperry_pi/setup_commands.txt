@@ -1,0 +1,36 @@
+# Comandos para configurar la Raspberry Pi como validador de tickets
+# Lista de comandos listos para copiar y pegar
+
+# 1. Modificar la URL base en raspberry_config.json (ejecutar en tu máquina local)
+# Por ejemplo, para cambiar la URL a https://ventapp.com.ar:
+# sed -i 's|https://tu-dominio.com|https://ventapp.com.ar|g' raspberry_config.json
+
+# 2. Transferir los archivos necesarios a la Raspberry Pi
+scp raspberry_config.json francolamber@192.168.68.53:~/
+scp setup_raspberry.sh francolamber@192.168.68.53:~/
+scp check_status.sh francolamber@192.168.68.53:~/
+scp manual_ping.sh francolamber@192.168.68.53:~/
+
+# 3. Conectar por SSH y hacer ejecutables los scripts
+ssh francolamber@192.168.68.53 'chmod +x ~/setup_raspberry.sh ~/check_status.sh ~/manual_ping.sh'
+
+# 4. Ejecutar el script de configuración inicial
+ssh francolamber@192.168.68.53 '~/setup_raspberry.sh'
+
+# 5. Verificar el estado de aprobación del dispositivo
+ssh francolamber@192.168.68.53 '~/check_status.sh'
+
+# 6. Enviar un ping manual al servidor para actualizar el estado
+ssh francolamber@192.168.68.53 '~/manual_ping.sh'
+
+# 7. Configurar un cron job para enviar pings automáticamente cada hora
+ssh francolamber@192.168.68.53 '(crontab -l 2>/dev/null; echo "0 * * * * /home/francolamber/manual_ping.sh >> /home/francolamber/ping.log 2>&1") | crontab -'
+
+# 8. Verificar que el cron job se ha añadido correctamente
+ssh francolamber@192.168.68.53 'crontab -l'
+
+# 9. Ver los logs de ping (después de que se haya ejecutado el cron al menos una vez)
+ssh francolamber@192.168.68.53 'cat ~/ping.log'
+
+# 10. Reiniciar la Raspberry Pi si es necesario
+ssh francolamber@192.168.68.53 'sudo reboot'

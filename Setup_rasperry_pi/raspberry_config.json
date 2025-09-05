@@ -1,0 +1,15 @@
+{
+  "api": {
+    "baseUrl": "https://tu-dominio.com/api",
+    "endpoints": {
+      "register": "/station/register",
+      "ping": "/station/ping",
+      "status": "/station/status",
+      "validate": "/station/validate"
+    }
+  },
+  "device": {
+    "name": "Pi-Validator",
+    "pingInterval": 60000
+  }
+} 

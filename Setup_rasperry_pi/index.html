@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Validador de Tickets</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+        background-color: #222;
+        color: white;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        overflow: hidden;
+      }
+      #header {
+        background-color: #33b5e5;
+        color: black;
+        padding: 15px;
+        font-size: 24px;
+        font-weight: bold;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+      }
+      #content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        transition: background-color 0.5s;
+      }
+      #message {
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 20px;
+      }
+      #details {
+        font-size: 24px;
+        max-width: 80%;
+      }
+      #scan-input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      #status {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        font-size: 14px;
+      }
+      #api-url {
+        position: absolute;
+        bottom: 40px;
+        right: 10px;
+        font-size: 12px;
+        color: #555;
+      }
+      #version-label {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        font-size: 12px;
+        color: #666;
+        background-color: rgba(0, 0, 0, 0.3);
+        padding: 3px 6px;
+        border-radius: 3px;
+      }
+      #logs-button {
+        position: absolute;
+        bottom: 10px;
+        left: 55px;
+        font-size: 12px;
+        color: #666;
+        background-color: rgba(0, 0, 0, 0.3);
+        padding: 3px 6px;
+        border-radius: 3px;
+        border: none;
+        cursor: pointer;
+      }
+      #logs-button:hover {
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+      #ip-display {
+        position: absolute;
+        bottom: 10px;
+        left: 145px;
+        font-size: 12px;
+        color: #666;
+        background-color: rgba(0, 0, 0, 0.3);
+        padding: 3px 6px;
+        border-radius: 3px;
+      }
+      #wifi-config-btn {
+        position: absolute;
+        bottom: 10px;
+        left: 100px;
+        font-size: 12px;
+        color: #666;
+        background-color: rgba(0, 0, 0, 0.3);
+        padding: 3px 6px;
+        border-radius: 3px;
+        border: none;
+        cursor: pointer;
+      }
+      #wifi-config-btn:hover {
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+      #log-container {
+        position: absolute;
+        left: 5px;
+        top: 80px;
+        width: 90%;
+        max-height: 150px;
+        overflow: auto;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        font-size: 10px;
+        text-align: left;
+        z-index: 9999;
+        border-radius: 3px;
+        padding: 5px;
+        display: none; /* Inicialmente oculto */
+      }
+      #wifi-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 10000;
+      }
+      .wifi-modal-content {
+        position: relative;
+        background-color: #333;
+        color: white;
+        margin: 5% auto; /* Reducido el margen superior */
+        padding: 15px;
+        width: 90%; /* Aumentado para pantallas pequeñas */
+        max-width: 350px; /* Reducido para pantallas pequeñas */
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        max-height: 90vh; /* Altura máxima para evitar desbordamiento */
+        overflow-y: auto; /* Permite scroll vertical */
+      }
+      .wifi-close {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        color: #aaa;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .wifi-close:hover {
+        color: #fff;
+      }
+      .wifi-title {
+        margin-top: 0;
+        color: #33b5e5;
+        font-size: 16px;
+        text-align: left;
+        border-bottom: 1px solid #555;
+        padding-bottom: 5px;
+      }
+      .wifi-section {
+        margin: 10px 0;
+      }
+      .wifi-network {
+        padding: 6px 8px;
+        font-size: 14px;
+        border-bottom: 1px solid #444;
+        cursor: pointer;
+      }
+      .wifi-network:hover {
+        background-color: #444;
+      }
+      .wifi-network.selected {
+        background-color: #33b5e5;
+      }
+      .wifi-current {
+        display: inline;
+        font-weight: bold;
+      }
+      .wifi-networks {
+        max-height: 150px;
+        overflow-y: auto;
+        margin: 10px 0;
+        border: 1px solid #555;
+        border-radius: 3px;
+      }
+      .wifi-form input {
+        margin-bottom: 10px;
+        padding: 6px;
+        width: 100%;
+        border: none;
+        border-radius: 3px;
+        background-color: #444;
+        color: white;
+      }
+      .wifi-form label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 14px;
+      }
+      .wifi-form button {
+        background-color: #33b5e5;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      .wifi-form button:hover {
+        background-color: #2a95bf;
+      }
+      .wifi-status {
+        margin-top: 10px;
+        padding: 8px;
+        border-radius: 3px;
+        text-align: center;
+        display: none;
+      }
+      .wifi-status.success {
+        background-color: rgba(0, 197, 200, 0.3);
+        color: #66ffff;
+      }
+      .wifi-status.error {
+        background-color: rgba(204, 0, 0, 0.3);
+        color: #ff6666;
+      }
+      .wifi-scan-btn {
+        background-color: #555;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        margin-bottom: 10px;
+        cursor: pointer;
+      }
+      .wifi-scan-btn:hover {
+        background-color: #666;
+      }
+      .log-entry {
+        margin: 2px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 2px;
+      }
+      .log-entry.error {
+        color: #ff6666;
+      }
+      .log-entry.log {
+        color: #66ff66;
+      }
+
+      .ticket-info {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 15px;
+        text-align: left;
+      }
+      .waiting {
+        background-color: #333;
+      }
+      .validating {
+        background-color: #33b5e5;
+      }
+      .success {
+        background-color: #00c5c8;
+      }
+      .error {
+        background-color: #cc0000;
+      }
+      .connected {
+        color: #00c5c8;
+      }
+      .disconnected {
+        color: #ff3333;
+      }
+      /* Sistema de pestañas para el modal */
+      .wifi-tabs {
+        display: flex;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #555;
+      }
+      .wifi-tab {
+        padding: 5px 10px;
+        cursor: pointer;
+        background-color: #444;
+        border: none;
+        color: #aaa;
+        margin-right: 5px;
+        border-radius: 3px 3px 0 0;
+      }
+      .wifi-tab.active {
+        background-color: #666;
+        color: white;
+      }
+      .wifi-tab-content {
+        display: none;
+      }
+      .wifi-tab-content.active {
+        display: block;
+      }
+      /* Botones de navegación entre pestañas */
+      .wifi-nav-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+      }
+      .wifi-back-btn,
+      .wifi-next-btn {
+        background-color: #555;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      .wifi-next-btn {
+        background-color: #33b5e5;
+      }
+      .wifi-next-btn:hover {
+        background-color: #2a95bf;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="header">VALIDADOR DE TICKETS</div>
+
+    <div id="content" class="waiting">
+      <div id="message">ESPERANDO CÓDIGO</div>
+      <div id="details">Escanea el código QR del ticket</div>
+    </div>
+
+    <input type="text" id="scan-input" autofocus />
+
+    <div id="status" class="disconnected">Desconectado</div>
+    <div id="version-label">V1.4</div>
+    <button id="logs-button">Logs</button>
+    <button id="wifi-config-btn">Conf</button>
+    <div id="ip-display">IP: ...</div>
+
+    <!-- Contenedor para logs -->
+    <div id="log-container"></div>
+
+    <!-- Modal para configuración WiFi -->
+    <div id="wifi-modal">
+      <div class="wifi-modal-content">
+        <span class="wifi-close">&times;</span>
+        <h3 class="wifi-title">Configuración WiFi</h3>
+
+        <div class="wifi-tabs">
+          <button class="wifi-tab active" data-tab="networks">Redes</button>
+          <button class="wifi-tab" data-tab="config">Configurar</button>
+        </div>
+
+        <div id="wifi-networks-tab" class="wifi-tab-content active">
+          <div class="wifi-section">
+            <p>Red WiFi actual: <span id="current-wifi">Cargando...</span></p>
+
+            <button class="wifi-scan-btn" id="scan-networks-btn">Buscar redes</button>
+
+            <div class="wifi-networks" id="wifi-networks-list">
+              <div class="wifi-network">Buscando redes disponibles...</div>
+            </div>
+
+            <div class="wifi-nav-buttons">
+              <div></div>
+              <!-- Espacio para alinear -->
+              <button class="wifi-next-btn" id="wifi-to-config-btn">Siguiente</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="wifi-config-tab" class="wifi-tab-content">
+          <div class="wifi-section wifi-form">
+            <label for="wifi-ssid">Nombre de la red:</label>
+            <input type="text" id="wifi-ssid" placeholder="Nombre de la red WiFi" />
+
+            <label for="wifi-password">Contraseña:</label>
+            <input type="password" id="wifi-password" placeholder="Contraseña de la red WiFi" />
+
+            <div class="wifi-nav-buttons">
+              <button class="wifi-back-btn" id="wifi-back-to-networks">Atrás</button>
+              <button id="save-wifi-btn">Guardar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="wifi-status" id="wifi-status"></div>
+      </div>
+    </div>
+
+    <script>
+      // Variables globales para la configuración
+      let API_BASE_URL = 'https://92f0-45-178-195-5.ngrok-free.app/api';
+      let API_VALIDATE_ENDPOINT = '/validate-ticket';
+      let API_KEY = 'test-api-key';
+
+      // Cargar configuración desde el servidor
+      function loadApiConfig() {
+        fetch('http://localhost:3000/api/config')
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Error al obtener configuración: ' + response.status);
+            }
+            return response.json();
+          })
+          .then(config => {
+            if (config.apiUrl) {
+              API_BASE_URL = config.apiUrl;
+              console.log('URL de API configurada:', API_BASE_URL);
+            }
+            if (config.validateEndpoint) {
+              API_VALIDATE_ENDPOINT = config.validateEndpoint;
+              console.log('Endpoint de validación:', API_VALIDATE_ENDPOINT);
+            }
+            if (config.apiKey) {
+              API_KEY = config.apiKey;
+              console.log('API Key configurada correctamente');
+            }
+
+            // Verificar conexión después de cargar la configuración
+            checkConnection();
+          })
+          .catch(error => {
+            console.error('Error al cargar configuración:', error);
+            // Si hay error, usar valores por defecto y verificar conexión
+            checkConnection();
+          })
+          .finally(() => {
+            console.log('Configuración cargada correctamente');
+            console.log('API Key:', API_KEY);
+            console.log('API Base URL:', API_BASE_URL);
+            console.log('Endpoint de validación:', API_VALIDATE_ENDPOINT);
+          });
+      }
+
+      // Obtener y mostrar la IP
+      function getIPAddress() {
+        const ipDisplay = document.getElementById('ip-display');
+
+        // Primero intentar con nuestra API local
+        fetch('http://localhost:3000/api/ip')
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Error en respuesta del servidor: ' + response.status);
+            }
+            return response.json();
+          })
+          .then(data => {
+            if (data && data.ip) {
+              ipDisplay.textContent = 'IP: ' + data.ip;
+              console.log('IP local obtenida desde API:', data.ip);
+            } else {
+              throw new Error('Formato de respuesta inválido');
+            }
+          })
+          .catch(error => {
+            console.error('Error al obtener IP desde API:', error);
+
+            // Como alternativa, intentar leer el archivo local
+            fetch('local_ip.txt')
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('No se pudo leer el archivo de IP: ' + response.status);
+                }
+                return response.text();
+              })
+              .then(ip => {
+                ip = ip.trim();
+                if (ip) {
+                  ipDisplay.textContent = 'IP: ' + ip;
+                  console.log('IP local obtenida desde archivo:', ip);
+                } else {
+                  throw new Error('Archivo de IP vacío');
+                }
+              })
+              .catch(fileError => {
+                console.error('Error al obtener IP local desde archivo:', fileError);
+                ipDisplay.textContent = 'IP: desconocida';
+
+                // Como última alternativa, intentar obtener IP pública
+                setTimeout(() => {
+                  fetch('https://api.ipify.org?format=json')
+                    .then(response => response.json())
+                    .then(data => {
+                      ipDisplay.textContent = 'IP: ' + data.ip + ' (ext)';
+                      console.log('IP externa obtenida:', data.ip);
+                    })
+                    .catch(err => {
+                      console.error('No se pudo obtener ninguna IP:', err);
+                    });
+                }, 3000);
+              });
+          });
+      }
+
+      // Cargar configuración al inicio
+      loadApiConfig();
+
+      // Intentar obtener la IP al inicio
+      getIPAddress();
+
+      // Intentar nuevamente cada 30 segundos por si la red cambia
+      setInterval(getIPAddress, 30000);
+
+      // Toggle de logs
+      const logsButton = document.getElementById('logs-button');
+      const logContainer = document.getElementById('log-container');
+
+      logsButton.addEventListener('click', function () {
+        if (logContainer.style.display === 'none' || logContainer.style.display === '') {
+          logContainer.style.display = 'block';
+        } else {
+          logContainer.style.display = 'none';
+        }
+      });
+
+      // Sistema de logs visuales
+      const originalLog = console.log;
+      const originalError = console.error;
+
+      // Crear función para añadir log al contenedor
+      function addLogToPage(message, type) {
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${type.toLowerCase()}`;
+        entry.textContent = `${new Date().toISOString().slice(11, 19)} ${type}: ${message}`;
+        logContainer.appendChild(entry);
+
+        // Limitar número de entradas (máx 20)
+        while (logContainer.children.length > 20) {
+          logContainer.removeChild(logContainer.firstChild);
+        }
+
+        // Auto-scroll al último mensaje
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
+
+      // Sobreescribir console.log
+      console.log = function () {
+        const message = Array.from(arguments).join(' ');
+        addLogToPage(message, 'LOG');
+        originalLog.apply(console, arguments);
+      };
+
+      // Sobreescribir console.error
+      console.error = function () {
+        const message = Array.from(arguments).join(' ');
+        addLogToPage(message, 'ERROR');
+        originalError.apply(console, arguments);
+      };
+
+      // Capturar errores globales
+      window.onerror = function (message, source, lineno, colno, error) {
+        console.error(`ERROR GLOBAL: ${message} (línea: ${lineno})`);
+        return true;
+      };
+
+      // Elementos del DOM
+      const content = document.getElementById('content');
+      const message = document.getElementById('message');
+      const details = document.getElementById('details');
+      const scanInput = document.getElementById('scan-input');
+      const status = document.getElementById('status');
+
+      // Estado
+      let isValidating = false;
+      let isConnected = false;
+
+      // Comprobar conexión
+      function checkConnection() {
+        console.log('Intentando verificar conexión...');
+        const HEALTH_URL = `${API_BASE_URL}${API_VALIDATE_ENDPOINT.startsWith('/') ? '' : '/'}${API_VALIDATE_ENDPOINT.replace('/validate-ticket', '/health')}`;
+        try {
+          fetch(HEALTH_URL, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${API_KEY}`,
+            },
+          })
+            .then(response => {
+              console.log('Respuesta recibida de checkConnection:', response.status);
+              if (response.ok) {
+                isConnected = true;
+                status.textContent = 'Conectado';
+                status.className = 'connected';
+                console.log('Conexión establecida, status:', response.status);
+                return response.json().catch(() => {
+                  // Si no es JSON válido, está bien, solo estamos verificando la conexión
+                  console.log('Respuesta no es JSON, pero conexión establecida');
+                  return { success: true };
+                });
+              } else {
+                throw new Error(`Estado: ${response.status}`);
+              }
+            })
+            .then(data => {
+              if (data && data.success) {
+                console.log('Datos recibidos de checkConnection:', data);
+              }
+            })
+            .catch(error => {
+              console.error('Error en fetch de checkConnection:', error);
+              isConnected = false;
+              status.textContent = 'Desconectado';
+              status.className = 'disconnected';
+            });
+        } catch (error) {
+          console.error('Error general en checkConnection:', error);
+        }
+      }
+
+      // Verificar ticket con la API
+      function validateTicket(ticketId) {
+        if (isValidating) return;
+        isValidating = true;
+
+        console.log('Validando ticket:', ticketId);
+
+        // Cambiar a estado de validación
+        content.className = 'validating';
+        message.textContent = 'VALIDANDO...';
+        details.textContent = 'Por favor espere';
+
+        // Preparar la solicitud
+        const API_URL = `${API_BASE_URL}${API_VALIDATE_ENDPOINT.startsWith('/') ? '' : '/'}${API_VALIDATE_ENDPOINT}`;
+        const payload = {
+          apiKey: API_KEY,
+          checkoutId: ticketId
+        };
+
+        console.log('Enviando payload:', payload);
+        console.log('URL de destino:', API_URL);
+
+        fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
+          .then(response => {
+            console.log('Respuesta recibida:', response.status);
+            if (!response.ok) {
+              throw new Error(`Error de red: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Datos recibidos:', data);
+            displayResult(data);
+          })
+          .catch(error => {
+            console.error('Error en fetch:', error);
+            content.className = 'error';
+            message.textContent = 'ERROR';
+            details.textContent = error.message || 'Error de comunicación';
+
+            // Auto-resetear después de 5 segundos
+            setTimeout(resetUI, 5000);
+          })
+          .finally(() => {
+            isValidating = false;
+          });
+      }
+
+      // Mostrar el resultado
+      function displayResult(result) {
+        if (result.success) {
+          content.className = 'success';
+          message.textContent = 'ACCESO PERMITIDO';
+
+          let ticketInfo = '';
+          if (result.ticket) {
+            const ticket = result.ticket;
+            const station = result.station || {};
+            ticketInfo = `
+              <div class="ticket-info">
+                <p><strong>ID:</strong> ${ticket.id || '-'}</p>
+                <p><strong>Ticket:</strong> ${ticket.title || '-'}</p>
+                <p><strong>Estado:</strong> ${ticket.status || '-'}</p>
+                ${station.name ? `<p><strong>Estación:</strong> ${station.name}</p>` : ''}
+              </div>
+            `;
+          }
+
+          details.innerHTML = result.message + (ticketInfo ? `<br>${ticketInfo}` : '');
+        } else {
+          content.className = 'error';
+          message.textContent = 'ACCESO DENEGADO';
+
+          let ticketInfo = '';
+          if (result.ticket) {
+            const ticket = result.ticket;
+            ticketInfo = `
+              <div class="ticket-info">
+                <p><strong>ID:</strong> ${ticket.id || '-'}</p>
+                <p><strong>Ticket:</strong> ${ticket.title || '-'}</p>
+                <p><strong>Estado:</strong> ${ticket.status || '-'}</p>
+              </div>
+            `;
+          }
+
+          details.innerHTML = result.message + (ticketInfo ? `<br>${ticketInfo}` : '');
+        }
+
+        // Auto-resetear después de 5 segundos
+        setTimeout(resetUI, 5000);
+      }
+
+      // Reiniciar la UI
+      function resetUI() {
+        content.className = 'waiting';
+        message.textContent = 'ESPERANDO CÓDIGO';
+        details.textContent = 'Escanea el código QR del ticket';
+        scanInput.value = '';
+        scanInput.focus();
+      }
+
+      // Extraer ID del ticket
+      function extractTicketId(qrData) {
+        qrData = qrData.trim();
+
+        if (qrData.includes('/')) {
+          const parts = qrData.split('/');
+          return parts[parts.length - 1];
+        }
+
+        return qrData;
+      }
+
+      // Manejar eventos de teclado (entrada del escáner)
+      scanInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' && scanInput.value.trim() !== '') {
+          const ticketId = extractTicketId(scanInput.value);
+          validateTicket(ticketId);
+        }
+      });
+
+      // Mantener el foco en el campo de entrada
+      setInterval(() => {
+        if (!document.activeElement || document.activeElement === document.body) {
+          scanInput.focus();
+        }
+      }, 100);
+
+      // Verificar conexión periódicamente
+      const connectionInterval = setInterval(() => {
+        try {
+          console.log('Ejecutando interval de checkConnection...');
+          checkConnection();
+        } catch (error) {
+          console.error('Error en intervalo de checkConnection:', error);
+        }
+      }, 30000);
+
+      console.log('Intervalo de conexión establecido:', connectionInterval);
+
+      // Inicializar
+      resetUI();
+      console.log('UI inicializada, validador listo.');
+
+      // Configuración WiFi
+      const wifiConfigBtn = document.getElementById('wifi-config-btn');
+      const wifiModal = document.getElementById('wifi-modal');
+      const wifiClose = document.querySelector('.wifi-close');
+      const currentWifi = document.getElementById('current-wifi');
+      const networksList = document.getElementById('wifi-networks-list');
+      const scanBtn = document.getElementById('scan-networks-btn');
+      const ssidInput = document.getElementById('wifi-ssid');
+      const passwordInput = document.getElementById('wifi-password');
+      const saveWifiBtn = document.getElementById('save-wifi-btn');
+      const wifiStatus = document.getElementById('wifi-status');
+      const wifiTabs = document.querySelectorAll('.wifi-tab');
+      const wifiTabContents = document.querySelectorAll('.wifi-tab-content');
+      const toConfigBtn = document.getElementById('wifi-to-config-btn');
+      const backToNetworksBtn = document.getElementById('wifi-back-to-networks');
+
+      // Mostrar modal de configuración WiFi
+      wifiConfigBtn.addEventListener('click', function () {
+        wifiModal.style.display = 'block';
+        showTab('networks');
+        getCurrentWifi();
+        scanNetworks();
+      });
+
+      // Sistema de pestañas
+      wifiTabs.forEach(tab => {
+        tab.addEventListener('click', function () {
+          const tabId = this.getAttribute('data-tab');
+          showTab(tabId);
+        });
+      });
+
+      // Función para mostrar pestaña
+      function showTab(tabId) {
+        // Desactivar todas las pestañas
+        wifiTabs.forEach(tab => {
+          tab.classList.remove('active');
+          if (tab.getAttribute('data-tab') === tabId) {
+            tab.classList.add('active');
+          }
+        });
+
+        // Ocultar todos los contenidos
+        wifiTabContents.forEach(content => {
+          content.classList.remove('active');
+        });
+
+        // Mostrar el contenido seleccionado
+        if (tabId === 'networks') {
+          document.getElementById('wifi-networks-tab').classList.add('active');
+        } else if (tabId === 'config') {
+          document.getElementById('wifi-config-tab').classList.add('active');
+        }
+      }
+
+      // Botones de navegación entre pestañas
+      toConfigBtn.addEventListener('click', function () {
+        showTab('config');
+      });
+
+      backToNetworksBtn.addEventListener('click', function () {
+        showTab('networks');
+      });
+
+      // Cerrar modal
+      wifiClose.addEventListener('click', function () {
+        wifiModal.style.display = 'none';
+      });
+
+      // Cerrar modal al hacer clic fuera del contenido
+      window.addEventListener('click', function (event) {
+        if (event.target === wifiModal) {
+          wifiModal.style.display = 'none';
+        }
+      });
+
+      // Obtener la configuración WiFi actual
+      function getCurrentWifi() {
+        console.log('Obteniendo configuración WiFi actual...');
+        fetch('http://localhost:3000/api/wifi/current')
+          .then(response => response.json())
+          .then(data => {
+            if (data.ssid) {
+              currentWifi.textContent = data.ssid;
+              console.log('Red WiFi actual:', data.ssid);
+            } else {
+              currentWifi.textContent = 'No configurado';
+            }
+          })
+          .catch(error => {
+            console.error('Error al obtener la configuración WiFi:', error);
+            currentWifi.textContent = 'Error al obtener la configuración';
+          });
+      }
+
+      // Escanear redes disponibles
+      function scanNetworks() {
+        console.log('Escaneando redes WiFi...');
+        networksList.innerHTML = '<div class="wifi-network">Buscando redes disponibles...</div>';
+
+        fetch('http://localhost:3000/api/wifi/networks')
+          .then(response => response.json())
+          .then(data => {
+            if (data.networks && data.networks.length > 0) {
+              networksList.innerHTML = '';
+              data.networks.forEach(network => {
+                const networkElement = document.createElement('div');
+                networkElement.className = 'wifi-network';
+                networkElement.textContent = network;
+                networkElement.addEventListener('click', function () {
+                  // Quitar selección previa
+                  document.querySelectorAll('.wifi-network').forEach(el => {
+                    el.classList.remove('selected');
+                  });
+                  // Seleccionar esta red
+                  this.classList.add('selected');
+                  ssidInput.value = network;
+                });
+                networksList.appendChild(networkElement);
+              });
+              console.log('Redes WiFi encontradas:', data.networks.length);
+            } else {
+              networksList.innerHTML = '<div class="wifi-network">No se encontraron redes</div>';
+              console.log('No se encontraron redes WiFi');
+            }
+          })
+          .catch(error => {
+            console.error('Error al escanear redes WiFi:', error);
+            networksList.innerHTML = '<div class="wifi-network">Error al buscar redes</div>';
+          });
+      }
+
+      // Botón de escaneo manual
+      scanBtn.addEventListener('click', scanNetworks);
+
+      // Guardar configuración WiFi
+      saveWifiBtn.addEventListener('click', function () {
+        const ssid = ssidInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (!ssid) {
+          showWifiStatus('Debe ingresar el nombre de la red', false);
+          return;
+        }
+
+        if (!password) {
+          showWifiStatus('Debe ingresar la contraseña', false);
+          return;
+        }
+
+        console.log('Guardando configuración WiFi para:', ssid);
+        showWifiStatus('Configurando red WiFi...', true);
+
+        fetch('http://localhost:3000/api/wifi/configure', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ssid, password }),
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              showWifiStatus('Configuración guardada. El sistema se reiniciará en breve.', true);
+              console.log('Configuración WiFi aplicada correctamente');
+
+              // Verificar conectividad después de un tiempo
+              setTimeout(checkConnectivity, 2000);
+            } else {
+              showWifiStatus(data.error || 'Error al configurar la red WiFi', false);
+              console.error('Error al configurar WiFi:', data.error);
+            }
+          })
+          .catch(error => {
+            console.error('Error en la solicitud de configuración WiFi:', error);
+            showWifiStatus('Error de comunicación con el servidor', false);
+          });
+      });
+
+      // Mostrar mensaje de estado
+      function showWifiStatus(message, isSuccess) {
+        wifiStatus.textContent = message;
+        wifiStatus.style.display = 'block';
+
+        if (isSuccess) {
+          wifiStatus.className = 'wifi-status success';
+        } else {
+          wifiStatus.className = 'wifi-status error';
+        }
+
+        // Ocultar después de 10 segundos si es exitoso
+        if (isSuccess) {
+          setTimeout(() => {
+            wifiStatus.style.display = 'none';
+          }, 10000);
+        }
+      }
+
+      // Verificar conectividad
+      function checkConnectivity() {
+        console.log('Verificando conectividad...');
+        fetch('http://localhost:3000/api/wifi/status')
+          .then(response => response.json())
+          .then(data => {
+            if (data.connected) {
+              console.log('Conectividad verificada');
+              showWifiStatus('Conexión establecida exitosamente!', true);
+            } else {
+              console.log('Sin conectividad todavía');
+              // Volver a intentar después de un tiempo
+              setTimeout(checkConnectivity, 2000);
+            }
+          })
+          .catch(error => {
+            console.error('Error al verificar conectividad:', error);
+            // Si hay un error, el sistema probablemente esté reiniciándose
+          });
+      }
+    </script>
+  </body>
+</html>

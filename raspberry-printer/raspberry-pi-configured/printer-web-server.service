@@ -1,0 +1,13 @@
+[Unit]
+Description=Servidor Web para Configuración de Impresora VentApp
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /home/francolamber/printer-client/server.js
+WorkingDirectory=/home/francolamber/printer-client
+Restart=always
+User=francolamber
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

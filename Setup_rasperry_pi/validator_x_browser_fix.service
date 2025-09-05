@@ -1,0 +1,16 @@
+[Unit]
+Description=Validador de Tickets en modo kiosk
+After=network.target
+
+[Service]
+Type=simple
+User=francolamber
+Environment=DISPLAY=:1
+Environment=XAUTHORITY=/home/francolamber/.Xauthority
+ExecStart=/home/francolamber/station-validator/start_x_browser_fix.sh
+WorkingDirectory=/home/francolamber/station-validator
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target 

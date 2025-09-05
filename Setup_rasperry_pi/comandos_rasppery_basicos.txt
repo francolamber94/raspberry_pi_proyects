@@ -1,0 +1,22 @@
+Comando raspberry pi
+
+- reiniciar server html
+ssh francolamber@192.168.68.54 'sudo systemctl restart validator_x_browser_fix.service'
+
+- reiniciar server api
+ssh francolamber@192.168.68.54 'sudo systemctl restart station-validator-api.service'
+
+- status server html
+ssh francolamber@192.168.68.54 'sudo systemctl status validator_x_browser_fix.service'
+
+- status server api
+ssh francolamber@192.168.68.54 'sudo systemctl status station-validator-api.service'
+
+- ver logs server html
+ssh francolamber@192.168.68.54 'sudo journalctl -u validator_x_browser_fix.service -f'
+
+- ver logs server api
+ssh francolamber@192.168.68.54 'sudo journalctl -u station-validator-api.service -f'
+
+- ver conf validator
+ssh francolamber@192.168.68.54 'cat /etc/systemd/system/validator_x_browser_fix.service'

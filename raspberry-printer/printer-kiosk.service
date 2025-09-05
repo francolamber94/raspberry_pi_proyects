@@ -1,0 +1,17 @@
+[Unit]
+Description=VentApp Printer Dashboard en modo kiosk
+After=network.target printer-dashboard.service
+Wants=printer-dashboard.service
+
+[Service]
+Type=simple
+User=francolamber
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/francolamber/.Xauthority
+ExecStart=/home/francolamber/printer-client/start-dashboard-kiosk.sh
+WorkingDirectory=/home/francolamber/printer-client
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

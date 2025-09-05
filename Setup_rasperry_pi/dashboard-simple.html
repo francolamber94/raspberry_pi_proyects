@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VentApp - Dashboard Impresora</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px 0;
+        }
+
+        .status-label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .status-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .status-connected { color: #27ae60; }
+        .status-disconnected { color: #e74c3c; }
+        .status-warning { color: #f39c12; }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+
+        .config-section {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .config-section:last-child {
+            border-bottom: none;
+        }
+
+        .config-section h4 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #8e44ad, #9b59b6);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #777;
+            font-size: 12px;
+        }
+
+        .alert {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖨️ VentApp Printer Dashboard</h1>
+            <p class="subtitle">Sistema de Impresión Raspberry Pi</p>
+        </div>
+
+        <!-- Estado del Sistema -->
+        <div class="status-grid">
+            <div class="status-card">
+                <h3>🌐 Conexión</h3>
+                <div class="status-item">
+                    <span class="status-label">IP Local:</span>
+                    <span id="ip-status" class="status-value">Cargando...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">WiFi:</span>
+                    <span id="wifi-status" class="status-value">Verificando...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Internet:</span>
+                    <span id="internet-status" class="status-value">Verificando...</span>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h3>🖨️ Impresora</h3>
+                <div class="status-item">
+                    <span class="status-label">Dispositivo:</span>
+                    <span id="device-status" class="status-value">Cargando...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Estado:</span>
+                    <span id="printer-status" class="status-value">Verificando...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Servidor:</span>
+                    <span id="server-status" class="status-value">Verificando...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="main-content">
+            <!-- Panel de Configuración -->
+            <div class="card">
+                <h2>⚙️ Configuración</h2>
+                
+                <!-- Configuración WiFi -->
+                <div class="config-section">
+                    <h4>📶 Red WiFi</h4>
+                    <button id="scan-networks" class="btn btn-success">📡 Buscar Redes</button>
+                    <button id="show-wifi-config" class="btn btn-warning">🔧 Configurar WiFi</button>
+                    
+                    <div id="wifi-config-form" style="display: none; margin-top: 15px;">
+                        <div class="form-group">
+                            <label for="wifi-ssid">Red WiFi:</label>
+                            <input type="text" id="wifi-ssid" placeholder="Nombre de la red">
+                        </div>
+                        <div class="form-group">
+                            <label for="wifi-password">Contraseña:</label>
+                            <input type="password" id="wifi-password" placeholder="Contraseña">
+                        </div>
+                        <button id="save-wifi" class="btn btn-success">💾 Conectar</button>
+                        <button id="cancel-wifi" class="btn">❌ Cancelar</button>
+                    </div>
+
+                    <div id="networks-list" class="network-list" style="display: none;">
+                        <!-- Las redes se llenarán aquí -->
+                    </div>
+                </div>
+
+                <!-- Configuración de Impresora -->
+                <div class="config-section">
+                    <h4>🖨️ Configuración de Impresora</h4>
+                    <button id="company-config-btn" class="btn btn-primary">🏢 Configurar Empresa</button>
+                    <button id="restart-services" class="btn btn-danger">🔄 Reiniciar Servicios</button>
+                    
+                    <!-- Formulario de Configuración de Empresa -->
+                    <div id="company-config-form" style="display: none; margin-top: 15px;">
+                        <h5>🏢 Configuración de Empresa</h5>
+                        <div class="form-group">
+                            <label for="deviceName">Nombre del Dispositivo:</label>
+                            <input type="text" id="deviceName" placeholder="Ej: Printer-Cocina-01">
+                            <small>Identificador único para esta impresora</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="companyId">ID de la Empresa:</label>
+                            <input type="text" id="companyId" placeholder="Ej: 58065731-debb-423a-9340-98829fde4a06">
+                            <small>UUID único de su empresa (solicítelo al administrador)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="serverUrl">URL del Servidor:</label>
+                            <input type="url" id="serverUrl" placeholder="https://ventapp.com.ar/api">
+                            <small>URL del servidor de VentApp</small>
+                        </div>
+                        <button id="save-company-config" class="btn btn-success">💾 Guardar Configuración</button>
+                        <button id="register-printer" class="btn btn-primary" disabled>🔗 Registrar Impresora</button>
+                        <button id="cancel-company-config" class="btn">❌ Cancelar</button>
+                        
+                        <div id="company-status" style="display: none; margin-top: 10px; padding: 10px; border-radius: 5px;"></div>
+                        <div id="registration-log" style="display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let systemStatus = {
+            ip: null,
+            wifi: null,
+            deviceName: null,
+            deviceStatus: null,
+            serverConnected: false
+        };
+
+        // Función para hacer peticiones API
+        async function fetchAPI(endpoint, options = {}) {
+            try {
+                const response = await fetch(`/api${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error(`Error en API ${endpoint}:`, error);
+                throw error;
+            }
+        }
+
+        // Función para actualizar el estado del sistema
+        async function updateSystemStatus() {
+            try {
+                // Actualizar IP
+                try {
+                    const ipData = await fetchAPI('/ip');
+                    systemStatus.ip = ipData.ip;
+                    document.getElementById('ip-status').textContent = ipData.ip || 'No disponible';
+                    document.getElementById('ip-status').className = 'status-value ' + (ipData.ip ? 'status-connected' : 'status-disconnected');
+                } catch (error) {
+                    document.getElementById('ip-status').textContent = 'Error';
+                    document.getElementById('ip-status').className = 'status-value status-disconnected';
+                }
+
+                // Actualizar WiFi
+                try {
+                    const wifiData = await fetchAPI('/wifi/current');
+                    systemStatus.wifi = wifiData.ssid;
+                    document.getElementById('wifi-status').textContent = wifiData.ssid || 'No configurado';
+                    document.getElementById('wifi-status').className = 'status-value ' + (wifiData.ssid && wifiData.ssid !== 'No configurado' ? 'status-connected' : 'status-disconnected');
+                } catch (error) {
+                    document.getElementById('wifi-status').textContent = 'Error';
+                    document.getElementById('wifi-status').className = 'status-value status-disconnected';
+                }
+
+                // Verificar conexión a internet
+                try {
+                    const statusData = await fetchAPI('/wifi/status');
+                    document.getElementById('internet-status').textContent = statusData.connected ? 'Conectado' : 'Desconectado';
+                    document.getElementById('internet-status').className = 'status-value ' + (statusData.connected ? 'status-connected' : 'status-disconnected');
+                } catch (error) {
+                    document.getElementById('internet-status').textContent = 'Error';
+                    document.getElementById('internet-status').className = 'status-value status-disconnected';
+                }
+
+                // Actualizar estado del dispositivo
+                try {
+                    const configData = await fetchAPI('/config');
+                    systemStatus.deviceName = configData.deviceName;
+                    document.getElementById('device-status').textContent = configData.deviceName || 'Sin configurar';
+                    document.getElementById('device-status').className = 'status-value ' + (configData.deviceName ? 'status-connected' : 'status-warning');
+                    
+                    document.getElementById('printer-status').textContent = configData.status === 'CONFIGURED' ? 'Configurado' : 'Pendiente';
+                    document.getElementById('printer-status').className = 'status-value ' + (configData.status === 'CONFIGURED' ? 'status-connected' : 'status-warning');
+                    
+                    document.getElementById('server-status').textContent = 'Verificando...';
+                    document.getElementById('server-status').className = 'status-value status-warning';
+                } catch (error) {
+                    document.getElementById('device-status').textContent = 'Error';
+                    document.getElementById('device-status').className = 'status-value status-disconnected';
+                    document.getElementById('printer-status').textContent = 'Error';
+                    document.getElementById('printer-status').className = 'status-value status-disconnected';
+                    document.getElementById('server-status').textContent = 'Error';
+                    document.getElementById('server-status').className = 'status-value status-disconnected';
+                }
+
+                console.log('Estado del sistema actualizado');
+            } catch (error) {
+                console.error('Error actualizando estado del sistema:', error);
+            }
+        }
+
+        // Funciones WiFi
+        async function scanNetworks() {
+            const button = document.getElementById('scan-networks');
+            button.disabled = true;
+            button.textContent = '🔄 Buscando...';
+            
+            try {
+                const data = await fetchAPI('/wifi/networks');
+                const networksList = document.getElementById('networks-list');
+                
+                if (data.networks && data.networks.length > 0) {
+                    networksList.innerHTML = data.networks.map(network => 
+                        `<div style="padding: 5px; border-bottom: 1px solid #ddd; cursor: pointer;" onclick="selectNetwork('${network}')">${network}</div>`
+                    ).join('');
+                    networksList.style.display = 'block';
+                } else {
+                    networksList.innerHTML = '<div style="padding: 10px;">No se encontraron redes</div>';
+                    networksList.style.display = 'block';
+                }
+            } catch (error) {
+                alert('Error al buscar redes WiFi');
+            } finally {
+                button.disabled = false;
+                button.textContent = '📡 Buscar Redes';
+            }
+        }
+
+        function selectNetwork(networkName) {
+            document.getElementById('wifi-ssid').value = networkName;
+            document.getElementById('networks-list').style.display = 'none';
+        }
+
+        async function saveWiFiConfig() {
+            const ssid = document.getElementById('wifi-ssid').value.trim();
+            const password = document.getElementById('wifi-password').value.trim();
+            
+            if (!ssid || !password) {
+                alert('Por favor complete todos los campos');
+                return;
+            }
+            
+            const button = document.getElementById('save-wifi');
+            button.disabled = true;
+            button.textContent = '🔄 Conectando...';
+            
+            try {
+                const data = await fetchAPI('/wifi/configure', {
+                    method: 'POST',
+                    body: JSON.stringify({ ssid, password })
+                });
+                
+                if (data.success) {
+                    alert('WiFi configurado correctamente');
+                    document.getElementById('wifi-config-form').style.display = 'none';
+                    setTimeout(updateSystemStatus, 2000);
+                } else {
+                    alert('Error: ' + (data.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                alert('Error de comunicación');
+            } finally {
+                button.disabled = false;
+                button.textContent = '💾 Conectar';
+            }
+        }
+
+        // Funciones de configuración de empresa
+        function showCompanyStatus(message, type) {
+            const status = document.getElementById('company-status');
+            status.textContent = message;
+            status.style.display = 'block';
+            status.style.backgroundColor = type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1';
+            status.style.color = type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460';
+            status.style.border = type === 'success' ? '1px solid #c3e6cb' : type === 'error' ? '1px solid #f5c6cb' : '1px solid #bee5eb';
+            
+            if (type === 'success') {
+                setTimeout(() => status.style.display = 'none', 5000);
+            }
+        }
+
+        function showRegistrationLog(message) {
+            const log = document.getElementById('registration-log');
+            log.textContent = message;
+            log.style.display = 'block';
+        }
+
+        async function saveCompanyConfig() {
+            const deviceName = document.getElementById('deviceName').value.trim();
+            const companyId = document.getElementById('companyId').value.trim();
+            const serverUrl = document.getElementById('serverUrl').value.trim();
+            
+            if (!deviceName || !companyId || !serverUrl) {
+                showCompanyStatus('Por favor complete todos los campos', 'error');
+                return;
+            }
+            
+            const saveBtn = document.getElementById('save-company-config');
+            saveBtn.disabled = true;
+            showCompanyStatus('Guardando configuración...', 'info');
+            
+            try {
+                const data = await fetchAPI('/setup', {
+                    method: 'POST',
+                    body: JSON.stringify({ deviceName, companyId, serverUrl })
+                });
+                
+                if (data.success) {
+                    showCompanyStatus('✅ Configuración guardada exitosamente', 'success');
+                    document.getElementById('register-printer').disabled = false;
+                } else {
+                    showCompanyStatus('❌ Error: ' + (data.error || data.message), 'error');
+                }
+            } catch (error) {
+                showCompanyStatus('❌ Error de comunicación', 'error');
+            } finally {
+                saveBtn.disabled = false;
+            }
+        }
+
+        async function registerPrinter() {
+            const registerBtn = document.getElementById('register-printer');
+            registerBtn.disabled = true;
+            showCompanyStatus('Registrando impresora en el servidor...', 'info');
+            showRegistrationLog('Iniciando proceso de registro...');
+            
+            try {
+                const data = await fetchAPI('/register-printer', {
+                    method: 'POST'
+                });
+                
+                if (data.success) {
+                    showCompanyStatus('🎉 ¡Impresora registrada exitosamente!', 'success');
+                    showRegistrationLog(data.output || 'Registro completado');
+                    setTimeout(() => window.location.reload(), 3000);
+                } else {
+                    showCompanyStatus('❌ Error al registrar: ' + (data.error || data.message), 'error');
+                    showRegistrationLog(data.details || 'Error en el registro');
+                }
+            } catch (error) {
+                showCompanyStatus('❌ Error de comunicación durante el registro', 'error');
+                showRegistrationLog('Error: ' + error.message);
+            } finally {
+                registerBtn.disabled = false;
+            }
+        }
+
+        async function restartServices() {
+            if (!confirm('¿Reiniciar los servicios de impresión?')) return;
+            
+            const button = document.getElementById('restart-services');
+            button.disabled = true;
+            button.textContent = '🔄 Reiniciando...';
+            
+            try {
+                const data = await fetchAPI('/services/restart', {
+                    method: 'POST'
+                });
+                
+                if (data.success) {
+                    alert('Servicios reiniciados correctamente');
+                } else {
+                    alert('Error al reiniciar servicios');
+                }
+            } catch (error) {
+                alert('Error de comunicación');
+            } finally {
+                button.disabled = false;
+                button.textContent = '🔄 Reiniciar Servicios';
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Actualización inicial
+            updateSystemStatus();
+            
+            // WiFi
+            document.getElementById('scan-networks').onclick = scanNetworks;
+            document.getElementById('save-wifi').onclick = saveWiFiConfig;
+            document.getElementById('show-wifi-config').onclick = () => {
+                const form = document.getElementById('wifi-config-form');
+                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            };
+            document.getElementById('cancel-wifi').onclick = () => {
+                document.getElementById('wifi-config-form').style.display = 'none';
+                document.getElementById('networks-list').style.display = 'none';
+            };
+
+            // Configuración de empresa
+            document.getElementById('company-config-btn').onclick = () => {
+                const form = document.getElementById('company-config-form');
+                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            };
+            document.getElementById('cancel-company-config').onclick = () => {
+                document.getElementById('company-config-form').style.display = 'none';
+            };
+            document.getElementById('save-company-config').onclick = saveCompanyConfig;
+            document.getElementById('register-printer').onclick = registerPrinter;
+
+            // Otros
+            document.getElementById('restart-services').onclick = restartServices;
+
+            // Auto-refresh cada 30 segundos
+            setInterval(updateSystemStatus, 30000);
+        });
+    </script>
+</body>
+</html>

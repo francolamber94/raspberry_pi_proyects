@@ -1,0 +1,20 @@
+[Unit]
+Description=VentApp Printer Dashboard
+After=network.target
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/node /home/francolamber/printer-client/dashboard-server.js
+WorkingDirectory=/home/francolamber/printer-client
+Restart=always
+RestartSec=5
+User=francolamber
+Environment=NODE_ENV=production
+
+# Configurar para que se inicie automáticamente
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

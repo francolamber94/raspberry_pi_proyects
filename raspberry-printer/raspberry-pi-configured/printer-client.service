@@ -1,0 +1,14 @@
+[Unit]
+Description=Cliente Impresora VentApp
+After=network.target printer-web-server.service
+
+[Service]
+ExecStart=/usr/bin/node /home/francolamber/printer-client/thermal-printer-client.js
+WorkingDirectory=/home/francolamber/printer-client
+Restart=always
+RestartSec=10
+User=francolamber
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VentApp - Configurador de Impresora</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .status-bar {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .status-label {
+            font-weight: bold;
+            margin-right: 10px;
+            color: #34495e;
+        }
+
+        .status-value {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .status-connected {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .status-disconnected {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .status-configured {
+            background: #3498db;
+            color: white;
+        }
+
+        .status-not-configured {
+            background: #f39c12;
+            color: white;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+        }
+
+        .btn-warning:hover {
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #ecf0f1;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1em;
+            color: #7f8c8d;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .network-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .network-item {
+            padding: 12px;
+            border-bottom: 1px solid #ecf0f1;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .network-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .network-item:last-child {
+            border-bottom: none;
+        }
+
+        .network-item.selected {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .logs {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+
+        .info-item h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .info-item p {
+            color: #7f8c8d;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖨️ VentApp Printer</h1>
+            <p class="subtitle">Configurador de Impresora Raspberry Pi</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-label">IP:</span>
+                <span id="ip-address" class="status-value">Cargando...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">WiFi:</span>
+                <span id="wifi-status" class="status-value">Verificando...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Estado:</span>
+                <span id="config-status" class="status-value">Cargando...</span>
+            </div>
+            <div class="status-item">
+                <button id="refresh-status" class="btn btn-success">🔄 Actualizar</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>📶 Configuración de Red</h2>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('networks')">Redes</button>
+                    <button class="tab" onclick="switchTab('configure')">Configurar</button>
+                </div>
+
+                <div id="networks-tab" class="tab-content active">
+                    <button id="scan-networks" class="btn">📡 Buscar Redes</button>
+                    <div id="networks-list" class="network-list" style="display: none;">
+                        <!-- Las redes se llenarán aquí -->
+                    </div>
+                    <p id="networks-status" style="margin-top: 10px; color: #7f8c8d;"></p>
+                </div>
+
+                <div id="configure-tab" class="tab-content">
+                    <div class="form-group">
+                        <label for="wifi-ssid">Nombre de Red (SSID):</label>
+                        <input type="text" id="wifi-ssid" placeholder="Ingrese el nombre de la red WiFi">
+                    </div>
+                    <div class="form-group">
+                        <label for="wifi-password">Contraseña:</label>
+                        <input type="password" id="wifi-password" placeholder="Ingrese la contraseña">
+                    </div>
+                    <button id="save-wifi" class="btn btn-success">💾 Guardar y Conectar</button>
+                    <p id="wifi-config-status" style="margin-top: 10px;"></p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🖨️ Configuración de Impresora</h2>
+                
+                <div class="form-group">
+                    <label for="device-name">Nombre del Dispositivo:</label>
+                    <input type="text" id="device-name" placeholder="Ej: Printer-Cocina-01">
+                </div>
+                
+                <div class="form-group">
+                    <label for="company-id">ID de Empresa:</label>
+                    <input type="text" id="company-id" placeholder="Ej: cm123abc456def789">
+                    <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+                        Contacte al administrador para obtener el ID de su empresa
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="server-url">URL del Servidor:</label>
+                    <input type="text" id="server-url" placeholder="https://lamber.ngrok.app/api">
+                </div>
+                
+                <button id="setup-printer" class="btn btn-warning">⚙️ Configurar Impresora</button>
+                <button id="register-printer" class="btn btn-success">📝 Registrar Dispositivo</button>
+                
+                <div id="printer-status" style="margin-top: 15px;"></div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h4>Estado Actual</h4>
+                        <p id="current-status">No configurado</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>Dispositivo</h4>
+                        <p id="current-device">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <h2>📋 Registro de Actividad</h2>
+            <button id="clear-logs" class="btn">🗑️ Limpiar</button>
+            <button id="toggle-logs" class="btn">👁️ Mostrar/Ocultar</button>
+            <div id="logs" class="logs" style="display: none; margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let selectedNetwork = '';
+        let logsVisible = false;
+
+        // Funciones de utilidad
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('logs');
+            const logLine = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            logElement.textContent += logLine;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[PRINTER CONFIG] ${logLine.trim()}`);
+        }
+
+        function showAlert(message, type = 'info') {
+            // Remover alertas existentes
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+
+            // Crear nueva alerta
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type === 'error' ? 'error' : type === 'success' ? 'success' : 'warning'}`;
+            alert.textContent = message;
+
+            // Insertar después del header
+            const header = document.querySelector('.header');
+            header.insertAdjacentElement('afterend', alert);
+
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        function setButtonLoading(buttonId, loading = true) {
+            const button = document.getElementById(buttonId);
+            if (loading) {
+                button.innerHTML = '<span class="loading"></span>' + button.textContent;
+                button.disabled = true;
+            } else {
+                button.innerHTML = button.textContent.replace(/^.*?(?=[A-Za-z])/, '');
+                button.disabled = false;
+            }
+        }
+
+        // Funciones de API
+        async function fetchAPI(endpoint, options = {}) {
+            try {
+                const response = await fetch(`/api${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                log(`Error en API ${endpoint}: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        // Funciones de estado
+        async function updateStatus() {
+            try {
+                // Obtener IP
+                const ipData = await fetchAPI('/ip');
+                document.getElementById('ip-address').textContent = ipData.ip || 'No disponible';
+                document.getElementById('ip-address').className = 'status-value status-connected';
+
+                // Obtener WiFi actual
+                const wifiData = await fetchAPI('/wifi/current');
+                document.getElementById('wifi-status').textContent = wifiData.ssid || 'No conectado';
+                document.getElementById('wifi-status').className = `status-value ${wifiData.ssid !== 'No configurado' ? 'status-connected' : 'status-disconnected'}`;
+
+                // Obtener configuración
+                const configData = await fetchAPI('/config');
+                document.getElementById('config-status').textContent = configData.status === 'CONFIGURED' ? 'Configurado' : 'No configurado';
+                document.getElementById('config-status').className = `status-value ${configData.status === 'CONFIGURED' ? 'status-configured' : 'status-not-configured'}`;
+
+                // Actualizar información de dispositivo
+                document.getElementById('current-device').textContent = configData.deviceName || 'No configurado';
+                document.getElementById('current-status').textContent = configData.status === 'CONFIGURED' ? 'Configurado' : 'No configurado';
+
+                // Pre-llenar formularios
+                if (configData.deviceName) {
+                    document.getElementById('device-name').value = configData.deviceName;
+                }
+
+                log('Estado actualizado correctamente');
+            } catch (error) {
+                log(`Error actualizando estado: ${error.message}`, 'error');
+                showAlert('Error al obtener el estado del sistema', 'error');
+            }
+        }
+
+        // Funciones de WiFi
+        async function scanNetworks() {
+            setButtonLoading('scan-networks', true);
+            document.getElementById('networks-status').textContent = 'Escaneando redes...';
+            
+            try {
+                const data = await fetchAPI('/wifi/networks');
+                const networksList = document.getElementById('networks-list');
+                
+                networksList.innerHTML = '';
+                
+                if (data.networks && data.networks.length > 0) {
+                    data.networks.forEach(network => {
+                        if (network.trim()) {
+                            const networkItem = document.createElement('div');
+                            networkItem.className = 'network-item';
+                            networkItem.textContent = network;
+                            networkItem.onclick = () => selectNetwork(network, networkItem);
+                            networksList.appendChild(networkItem);
+                        }
+                    });
+                    
+                    networksList.style.display = 'block';
+                    document.getElementById('networks-status').textContent = `${data.networks.length} redes encontradas. Haga clic en una para seleccionar.`;
+                    log(`Encontradas ${data.networks.length} redes WiFi`);
+                } else {
+                    document.getElementById('networks-status').textContent = 'No se encontraron redes WiFi.';
+                    log('No se encontraron redes WiFi', 'warning');
+                }
+            } catch (error) {
+                document.getElementById('networks-status').textContent = 'Error al escanear redes.';
+                showAlert('Error al escanear redes WiFi', 'error');
+            } finally {
+                setButtonLoading('scan-networks', false);
+            }
+        }
+
+        function selectNetwork(network, element) {
+            // Remover selección anterior
+            document.querySelectorAll('.network-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Seleccionar nueva red
+            element.classList.add('selected');
+            selectedNetwork = network;
+            
+            // Llenar el formulario
+            document.getElementById('wifi-ssid').value = network;
+            
+            // Cambiar a la pestaña de configuración
+            switchTab('configure');
+            
+            log(`Red seleccionada: ${network}`);
+        }
+
+        async function saveWiFiConfig() {
+            const ssid = document.getElementById('wifi-ssid').value.trim();
+            const password = document.getElementById('wifi-password').value;
+            
+            if (!ssid || !password) {
+                showAlert('Por favor complete todos los campos', 'warning');
+                return;
+            }
+            
+            setButtonLoading('save-wifi', true);
+            document.getElementById('wifi-config-status').textContent = 'Configurando WiFi...';
+            
+            try {
+                const data = await fetchAPI('/wifi/configure', {
+                    method: 'POST',
+                    body: JSON.stringify({ ssid, password })
+                });
+                
+                if (data.success) {
+                    document.getElementById('wifi-config-status').textContent = data.message;
+                    showAlert('WiFi configurado correctamente', 'success');
+                    log(`WiFi configurado: ${ssid}`);
+                    
+                    // Actualizar estado después de unos segundos
+                    setTimeout(() => {
+                        updateStatus();
+                    }, 3000);
+                } else {
+                    throw new Error(data.error || 'Error desconocido');
+                }
+            } catch (error) {
+                document.getElementById('wifi-config-status').textContent = `Error: ${error.message}`;
+                showAlert('Error al configurar WiFi', 'error');
+            } finally {
+                setButtonLoading('save-wifi', false);
+            }
+        }
+
+        // Funciones de impresora
+        async function setupPrinter() {
+            const deviceName = document.getElementById('device-name').value.trim();
+            const companyId = document.getElementById('company-id').value.trim();
+            const serverUrl = document.getElementById('server-url').value.trim() || 'https://lamber.ngrok.app/api';
+            
+            if (!deviceName) {
+                showAlert('Por favor ingrese un nombre para el dispositivo', 'warning');
+                return;
+            }
+            
+            if (!companyId) {
+                showAlert('Por favor ingrese el ID de empresa', 'warning');
+                return;
+            }
+            
+            setButtonLoading('setup-printer', true);
+            
+            try {
+                const data = await fetchAPI('/setup', {
+                    method: 'POST',
+                    body: JSON.stringify({ deviceName, companyId, serverUrl })
+                });
+                
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    log(`Impresora configurada: ${deviceName}`);
+                    updateStatus();
+                } else {
+                    throw new Error(data.error || 'Error desconocido');
+                }
+            } catch (error) {
+                showAlert('Error al configurar la impresora', 'error');
+            } finally {
+                setButtonLoading('setup-printer', false);
+            }
+        }
+
+        async function registerPrinter() {
+            showAlert('Función de registro automático próximamente. Use el script de configuración manual.', 'warning');
+            log('Registro automático no implementado aún', 'warning');
+        }
+
+        // Funciones de interfaz
+        function switchTab(tabName) {
+            // Ocultar todas las pestañas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar pestaña seleccionada
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function toggleLogs() {
+            const logsElement = document.getElementById('logs');
+            logsVisible = !logsVisible;
+            logsElement.style.display = logsVisible ? 'block' : 'none';
+            
+            const button = document.getElementById('toggle-logs');
+            button.textContent = logsVisible ? '👁️ Ocultar' : '👁️ Mostrar';
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').textContent = '';
+            log('Logs limpiados');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Actualizar estado inicial
+            updateStatus();
+            
+            // Configurar event listeners
+            document.getElementById('refresh-status').onclick = updateStatus;
+            document.getElementById('scan-networks').onclick = scanNetworks;
+            document.getElementById('save-wifi').onclick = saveWiFiConfig;
+            document.getElementById('setup-printer').onclick = setupPrinter;
+            document.getElementById('register-printer').onclick = registerPrinter;
+            document.getElementById('toggle-logs').onclick = toggleLogs;
+            document.getElementById('clear-logs').onclick = clearLogs;
+            
+            // Pre-llenar URL del servidor
+            document.getElementById('server-url').value = 'https://lamber.ngrok.app/api';
+            
+            log('Configurador de impresora iniciado');
+        });
+
+        // Actualizar estado cada 30 segundos
+        setInterval(updateStatus, 30000);
+    </script>
+</body>
+</html>

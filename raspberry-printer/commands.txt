@@ -1,0 +1,221 @@
+# Comandos para Configurar Impresora Raspberry Pi - VentApp
+
+## 🚀 CONFIGURACIÓN AUTOMÁTICA (RECOMENDADO)
+
+# Configuración completa automática para Pi SunsetDrive:
+cd raspberry-printer
+./configure-sunset-pi.sh
+
+# Esto hará todo automáticamente:
+# ✅ Copiar archivos
+# ✅ Instalar sistema
+# ✅ Configurar dashboard
+# ✅ Registrar dispositivo
+# ✅ Mostrar URLs de acceso
+
+## 📱 ACCESO DIRECTO
+# Dashboard: http://192.168.68.62:3000
+# Config: http://192.168.68.62:3001
+
+---
+
+## 1. PREPARACIÓN MANUAL EN TU COMPUTADORA
+
+# Modificar URL base en printer-config.json (si es necesario)
+sed -i 's|https://ventapp.com.ar|https://tu-dominio.com|g' raspberry-printer/printer-config.json
+
+# Transferir archivos a la Raspberry Pi
+scp -r raspberry-printer/* francolamber@192.168.68.62:~/
+
+## 2. INSTALACIÓN EN RASPBERRY PI
+
+# Conectar por SSH
+sshpass -p 'Dire4327' ssh francolamber@192.168.68.62
+
+# Hacer ejecutable el script de instalación
+chmod +x ~/install.sh
+
+# Ejecutar instalación (como root)
+sudo ./install.sh
+
+# El script reiniciará automáticamente el sistema
+
+## 3. ACCESO AL DASHBOARD
+
+# Después del reinicio, el dashboard se abrirá automáticamente en la Pi
+# También puedes acceder desde cualquier dispositivo en la red:
+
+# Dashboard Principal (auto-inicio en la Pi):
+# http://192.168.68.62:3000
+
+# Configuración Avanzada:
+# http://192.168.68.62:3001
+
+# O mostrar guía de configuración desde SSH:
+sshpass -p 'Dire4327' ssh francolamber@192.168.68.62
+config-printer
+
+## 4. CONFIGURACIÓN RÁPIDA
+
+# Configuración rápida con todos los parámetros
+cd ~/
+./quick-setup.sh "Printer-Cocina-01" "cm123abc456def789" "https://ventapp.com.ar/api"
+
+# O configuración paso a paso:
+cd ~/printer-client
+node setup-printer.js
+
+# Verificar estado del dispositivo
+printer-status
+# O manualmente:
+cd ~/printer-client && node check-printer-status.js
+
+## 5. APROBAR DISPOSITIVO
+
+# El administrador debe aprobar desde el panel de VentApp
+# Mientras tanto, puedes verificar el estado periódicamente:
+watch -n 10 'cd ~/printer-client && node check-printer-status.js'
+
+## 6. INICIAR SERVICIO DE IMPRESIÓN
+
+# Una vez aprobado el dispositivo, habilitar e iniciar el servicio
+sudo systemctl enable printer-client.service
+sudo systemctl start printer-client.service
+
+# Verificar que el servicio esté funcionando
+sudo systemctl status printer-client.service
+
+## 7. MONITOREO Y MANTENIMIENTO
+
+# Ver logs en tiempo real
+printer-logs
+# O manualmente:
+journalctl -u printer-client.service -f
+
+# Verificar estado de servicios
+printer-dashboard     # Estado del dashboard
+printer-web          # Estado del servidor de configuración
+systemctl status printer-client.service  # Estado del cliente
+
+# Reiniciar servicios si es necesario
+sudo systemctl restart printer-dashboard.service
+sudo systemctl restart printer-client.service
+sudo systemctl restart printer-web-server.service
+
+# Acceso remoto al dashboard
+# Desde cualquier dispositivo en la red:
+# http://IP_DE_LA_PI:3000
+
+# Verificar impresoras conectadas
+lsusb | grep -i printer
+lpstat -p
+
+# Ver trabajos de impresión pendientes
+lpstat -o
+
+## 8. COMANDOS DE DIAGNÓSTICO
+
+# Verificar conectividad con el servidor
+curl -v https://ventapp.com.ar/api/health
+
+# Verificar configuración local
+cat ~/printer-client/config.json
+
+# Verificar credenciales (solo propietario puede ver)
+ls -la ~/printer-client/credentials.json
+
+# Probar impresión local
+echo "Prueba de impresión" | lp
+
+# Ver información del sistema
+uptime
+free -h
+df -h
+
+## 9. CONFIGURACIÓN DE RED WIFI (MANUAL)
+
+# Escanear redes disponibles
+sudo nmcli device wifi list
+
+# Conectar a red WiFi
+sudo nmcli device wifi connect "NOMBRE_RED" password "CONTRASEÑA"
+
+# Ver conexiones activas
+nmcli connection show --active
+
+# Ver estado de la interfaz de red
+ip addr show wlan0
+
+## 10. SOLUCIÓN DE PROBLEMAS
+
+# Si el servidor web no responde
+sudo systemctl restart printer-web-server.service
+sudo netstat -tlnp | grep :3001
+
+# Si hay problemas con la impresora
+sudo systemctl restart cups
+sudo usermod -a -G lpadmin francolamber
+
+# Si hay problemas de red
+sudo systemctl restart NetworkManager
+ping -c 4 8.8.8.8
+
+# Reconfigurar completamente (CUIDADO: borra configuración)
+rm -f ~/printer-client/config.json ~/printer-client/credentials.json
+sudo ./install.sh
+
+## 11. COMANDOS ÚTILES DE ADMINISTRACIÓN
+
+# Hacer backup de la configuración
+tar -czf printer-backup-$(date +%Y%m%d).tar.gz ~/printer-client/config.json ~/printer-client/credentials.json
+
+# Ver todos los servicios relacionados
+systemctl list-units | grep printer
+
+# Deshabilitar servicios (para mantenimiento)
+sudo systemctl stop printer-client.service
+sudo systemctl stop printer-web-server.service
+
+# Ver logs del sistema
+journalctl --since "1 hour ago" | grep -i printer
+
+## 12. COMANDOS DE DESARROLLO/DEBUG
+
+# Ejecutar cliente manualmente (para debug)
+cd ~/printer-client
+node printer-client.js
+
+# Ejecutar servidor web manualmente
+cd ~/printer-client
+node server.js
+
+# Probar configuración
+cd ~/printer-client
+node -e "console.log(JSON.stringify(require('./config.json'), null, 2))"
+
+# Ver variables de entorno
+env | grep -i node
+
+## NOTAS IMPORTANTES:
+
+# - Siempre usar 'sudo' para comandos de sistema (systemctl, apt, etc.)
+# - Los archivos de configuración están en ~/printer-client/
+# - Los logs se pueden ver con 'journalctl' o en la interfaz web
+# - La interfaz web está en puerto 3001
+# - El cliente de impresión se conecta al servidor cada 5 segundos
+# - Las credenciales son únicas por dispositivo y se generan automáticamente
+
+## SECUENCIA COMPLETA DE COMANDOS (EJEMPLO):
+
+sshpass -p 'Dire4327' ssh francolamber@192.168.68.62
+chmod +x ~/install.sh
+sudo ./install.sh
+# [Sistema se reinicia]
+sshpass -p 'Dire4327' ssh francolamber@192.168.68.62
+# Dashboard disponible en http://192.168.68.62:3000
+./quick-setup.sh 'Printer-SunsetDrive-01' '58065731-debb-423a-9340-98829fde4a06' 'https://lamber.ngrok.app/api'
+printer-status
+# [Esperar aprobación del admin]
+sudo systemctl enable printer-client.service
+sudo systemctl start printer-client.service
+printer-logs

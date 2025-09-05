@@ -1,0 +1,345 @@
+<!-- Sección de Configuración de Empresa -->
+<div class="card" id="company-config-card" style="display: none;">
+    <div class="card-header">
+        <h3>⚙️ Configuración de Empresa</h3>
+        <p>Configure la información de su empresa para conectar la impresora</p>
+    </div>
+    <div class="card-content">
+        <form id="company-config-form">
+            <div class="form-group">
+                <label for="deviceName">Nombre del Dispositivo:</label>
+                <input type="text" id="deviceName" name="deviceName" 
+                       placeholder="Ej: Printer-Cocina-01" required>
+                <small>Identificador único para esta impresora</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="companyId">ID de la Empresa:</label>
+                <input type="text" id="companyId" name="companyId" 
+                       placeholder="Ej: 58065731-debb-423a-9340-98829fde4a06" required>
+                <small>UUID único de su empresa (solicítelo al administrador)</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="serverUrl">URL del Servidor:</label>
+                <input type="url" id="serverUrl" name="serverUrl" 
+                       placeholder="https://ventapp.com.ar/api" required>
+                <small>URL del servidor de VentApp</small>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" id="save-config-btn" class="btn btn-primary">
+                    💾 Guardar Configuración
+                </button>
+                <button type="button" id="register-printer-btn" class="btn btn-success" disabled>
+                    🔗 Registrar Impresora
+                </button>
+                <button type="button" id="cancel-config-btn" class="btn btn-secondary">
+                    ❌ Cancelar
+                </button>
+            </div>
+        </form>
+        
+        <div id="config-status" class="status-message" style="display: none;"></div>
+        <div id="registration-log" class="log-output" style="display: none;"></div>
+    </div>
+</div>
+
+<style>
+.card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card-header h3 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1.5em;
+}
+
+.card-header p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 5px;
+    color: #888;
+    font-size: 14px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 150px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(86, 171, 47, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(44, 62, 80, 0.4);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.status-message {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.status-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-message.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.log-output {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 768px) {
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+// JavaScript para manejar la configuración de empresa
+document.addEventListener('DOMContentLoaded', function() {
+    const companyConfigCard = document.getElementById('company-config-card');
+    const companyConfigForm = document.getElementById('company-config-form');
+    const saveConfigBtn = document.getElementById('save-config-btn');
+    const registerPrinterBtn = document.getElementById('register-printer-btn');
+    const cancelConfigBtn = document.getElementById('cancel-config-btn');
+    const configStatus = document.getElementById('config-status');
+    const registrationLog = document.getElementById('registration-log');
+    
+    // Cargar configuración actual al iniciar
+    loadCurrentConfig();
+    
+    function loadCurrentConfig() {
+        fetch('/api/config')
+            .then(response => response.json())
+            .then(data => {
+                if (data.deviceName) {
+                    document.getElementById('deviceName').value = data.deviceName;
+                }
+                // Cargar más datos si están disponibles
+            })
+            .catch(error => {
+                console.error('Error cargando configuración:', error);
+            });
+    }
+    
+    function showStatus(message, type = 'info') {
+        configStatus.textContent = message;
+        configStatus.className = `status-message ${type}`;
+        configStatus.style.display = 'block';
+        
+        if (type === 'success') {
+            setTimeout(() => {
+                configStatus.style.display = 'none';
+            }, 5000);
+        }
+    }
+    
+    function showLog(message) {
+        registrationLog.textContent = message;
+        registrationLog.style.display = 'block';
+    }
+    
+    // Guardar configuración
+    saveConfigBtn.addEventListener('click', function() {
+        const formData = new FormData(companyConfigForm);
+        const configData = {
+            deviceName: formData.get('deviceName'),
+            companyId: formData.get('companyId'),
+            serverUrl: formData.get('serverUrl')
+        };
+        
+        if (!configData.deviceName || !configData.companyId || !configData.serverUrl) {
+            showStatus('Por favor complete todos los campos', 'error');
+            return;
+        }
+        
+        saveConfigBtn.disabled = true;
+        showStatus('Guardando configuración...', 'info');
+        
+        fetch('/api/setup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(configData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showStatus('✅ Configuración guardada exitosamente', 'success');
+                registerPrinterBtn.disabled = false;
+            } else {
+                showStatus('❌ Error: ' + (data.error || data.message), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showStatus('❌ Error de comunicación con el servidor', 'error');
+        })
+        .finally(() => {
+            saveConfigBtn.disabled = false;
+        });
+    });
+    
+    // Registrar impresora
+    registerPrinterBtn.addEventListener('click', function() {
+        registerPrinterBtn.disabled = true;
+        showStatus('Registrando impresora en el servidor...', 'info');
+        showLog('Iniciando proceso de registro...');
+        
+        fetch('/api/register-printer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showStatus('🎉 ¡Impresora registrada exitosamente!', 'success');
+                showLog(data.output || 'Registro completado');
+                
+                // Actualizar la página después de un momento
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            } else {
+                showStatus('❌ Error al registrar: ' + (data.error || data.message), 'error');
+                showLog(data.details || 'Error en el registro');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showStatus('❌ Error de comunicación durante el registro', 'error');
+            showLog('Error: ' + error.message);
+        })
+        .finally(() => {
+            registerPrinterBtn.disabled = false;
+        });
+    });
+    
+    // Cancelar configuración
+    cancelConfigBtn.addEventListener('click', function() {
+        companyConfigCard.style.display = 'none';
+    });
+    
+    // Función global para mostrar el formulario de configuración
+    window.showCompanyConfig = function() {
+        companyConfigCard.style.display = 'block';
+        companyConfigCard.scrollIntoView({ behavior: 'smooth' });
+    };
+});
+</script>
