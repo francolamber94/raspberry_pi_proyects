@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 import sys
 import json
+import os
 from escpos.printer import Usb
+
+# Añadir el directorio padre al path para importar ticket_encryption
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from ticket_encryption import encrypt_ticket_id
 
 def print_ticket_complete(ticket_data_json):
     """
@@ -72,7 +77,16 @@ def print_ticket_complete(ticket_data_json):
         # === CÓDIGO QR (centrado y más grande) ===
         # Espacio antes del QR (igual que en template HTML)
         p.text("\n")
-        qr_code = f"{ticket_data['type'][0] if ticket_data.get('type') else 'i'}_{ticket_data['id']}"
+        # Usar encriptación para el código QR
+        # Mapear tipos correctamente: checkout -> b, ticket/individual -> i
+        raw_type = ticket_data.get('type', 'individual')
+        if raw_type == 'checkout':
+            ticket_type = 'b'
+        elif raw_type in ['individual', 'ticket']:
+            ticket_type = 'i'
+        else:
+            ticket_type = raw_type[0]  # fallback
+        qr_code = encrypt_ticket_id(ticket_type, ticket_data['id'])
         # Asegurar centrado antes del QR
         p.set(align="center")
         # Aumentar tamaño del QR para mejor visibilidad (size=10 en lugar de 8)

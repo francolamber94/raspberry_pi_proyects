@@ -192,4 +192,70 @@ sshpass -p 'Dire4327' ssh francolamber@192.168.68.62 \
 
 ---
 
+---
+
+## 🔒 **ACTUALIZACIÓN ENCRIPTACIÓN QR - 05/01/2025**
+
+### **Problema Identificado**
+Los QR codes de impresión generaban códigos sin encriptar:
+- ❌ **Antes**: `c_88ba9b60-1289-4e04-81b7-d67fe5e411ed` (UUID plano)
+- ✅ **Ahora**: `b11yz0y3987105v9518y2w32uv4v588vw` (encriptado)
+
+### **Solución Implementada**
+
+#### **Archivos Creados**
+- `ticketEncryption.js` - Función de encriptación JavaScript
+- `ticket_encryption.py` - Función de encriptación Python
+- `test_encryption.js` - Script de pruebas
+
+#### **Archivos Modificados**
+- `printer-client.js` - Usar `encryptTicketId()` en lugar de formato plano
+- `raspberry-pi-configured/printer-client/printer-client.js` - Idem
+- `raspberry-pi-configured/printer-client/thermal-printer-client.js` - Idem
+- `raspberry-pi-configured/print_ticket_complete.py` - Usar `encrypt_ticket_id()`
+
+#### **Verificación**
+```bash
+cd /Users/francolambertucci/work/remove/raspberry_pi_proyects/raspberry-printer
+node test_encryption.js
+# ✅ Resultado: b11yz0y3987105v9518y2w32uv4v588vw (idéntico al ticket web)
+```
+
+### **Problemas Encontrados y Solucionados**
+
+#### **Problema 1: Checkout con `c_` en lugar de `b`**
+- ❌ **Problema**: `'checkout'[0]` = `'c'` (primera letra)
+- ✅ **Solución**: Mapeo explícito `'checkout'` → `'b'`
+
+#### **Problema 2: Tickets individuales con `t_` en lugar de `i`**  
+- ❌ **Problema**: VentApp envía `'ticket'` pero `'ticket'[0]` = `'t'`
+- ✅ **Solución**: Mapeo explícito `'ticket'` → `'i'`
+
+### **Corrección Final - Mapeo Completo**
+```javascript
+// Antes (incorrecto)
+const typeTicket = ticketData.type[0]; // 'checkout'[0] = 'c', 'ticket'[0] = 't'
+
+// Después (correcto con mapeo completo)
+let typeTicket = 'i'; // default
+if (ticketData.type === 'checkout') {
+  typeTicket = 'b';
+} else if (ticketData.type === 'individual' || ticketData.type === 'ticket') {
+  typeTicket = 'i';
+}
+```
+
+### **Tipos de Datos Enviados por VentApp**
+- **Bundles/Checkouts**: `"type": "checkout"` → Mapea a `'b'`
+- **Tickets Individuales**: `"type": "ticket"` → Mapea a `'i'`  
+- **Fallback**: Cualquier otro tipo → Mapea a `'i'`
+
+### **Resultado**
+- ✅ **QR de impresión**: Ahora usa encriptación consistente con VentApp
+- ✅ **QR de ticket web**: Ya funcionaba correctamente
+- ✅ **Mapeo de tipos**: `checkout` → `b`, `individual` → `i`
+- ✅ **Compatibilidad**: Los QR codes son idénticos entre web e impresión
+
+---
+
 **✅ Configuración completada - El puerto 3000 muestra solo configuración WiFi**

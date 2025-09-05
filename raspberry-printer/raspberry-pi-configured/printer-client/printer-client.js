@@ -6,6 +6,7 @@ const axios = require('axios');
 const { exec } = require('child_process');
 const QRCode = require('qrcode');
 const { ThermalPrinter, PrinterTypes, CharacterSet, BreakLine } = require('node-thermal-printer');
+const { encryptTicketId } = require('../../ticketEncryption');
 
 // Colores para los mensajes
 const colors = {
@@ -488,8 +489,15 @@ class PrinterClient {
 
       this.printer.drawLine();
       
-      // Código QR
-      const qrCode = `${ticketData.type === 'checkout' ? 'b' : 'i'}_${ticketData.id}`;
+      // Código QR - usar encriptación
+      // Mapear tipos correctamente: checkout -> b, ticket/individual -> i
+      let typeTicket = 'i'; // default
+      if (ticketData.type === 'checkout') {
+        typeTicket = 'b';
+      } else if (ticketData.type === 'individual' || ticketData.type === 'ticket') {
+        typeTicket = 'i';
+      }
+      const qrCode = encryptTicketId(typeTicket, ticketData.id);
       const qrBuffer = await this.generateQR(qrCode);
       
       this.printer.alignCenter();
@@ -522,8 +530,15 @@ class PrinterClient {
     const ticketData = job.ticketData;
     
     try {
-      // Generar HTML para impresión
-      const qrCode = `${ticketData.type === 'checkout' ? 'b' : 'i'}_${ticketData.id}`;
+      // Generar HTML para impresión - usar encriptación
+      // Mapear tipos correctamente: checkout -> b, ticket/individual -> i
+      let typeTicket = 'i'; // default
+      if (ticketData.type === 'checkout') {
+        typeTicket = 'b';
+      } else if (ticketData.type === 'individual' || ticketData.type === 'ticket') {
+        typeTicket = 'i';
+      }
+      const qrCode = encryptTicketId(typeTicket, ticketData.id);
       const qrDataURL = await QRCode.toDataURL(qrCode, { width: 200 });
       
       let ticketsHtml = '';

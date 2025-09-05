@@ -301,8 +301,16 @@ async function printJob(job) {
           console.error(`❌ Error imprimiendo ticket completo:`, error.message);
           console.log(`📋 Fallback: Intentando con QR simple...`);
           
-          // Fallback: usar script de QR simple
-          const qrCode = `${ticketData.type === "checkout" ? "b" : "i"}_${ticketData.id}`;
+          // Fallback: usar script de QR simple - con encriptación
+          const { encryptTicketId } = require('../../ticketEncryption');
+          // Mapear tipos correctamente: checkout -> b, ticket/individual -> i
+          let typeTicket = 'i'; // default
+          if (ticketData.type === 'checkout') {
+            typeTicket = 'b';
+          } else if (ticketData.type === 'individual' || ticketData.type === 'ticket') {
+            typeTicket = 'i';
+          }
+          const qrCode = encryptTicketId(typeTicket, ticketData.id);
           exec(`python3 /home/francolamber/print_qr.py "${qrCode}"`, async (fallbackError, fallbackStdout, fallbackStderr) => {
             if (fallbackError) {
               console.error(`❌ Error en fallback:`, fallbackError.message);
